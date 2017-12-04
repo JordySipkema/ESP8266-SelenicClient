@@ -10,8 +10,8 @@ protected:
   int pin;
 public:
   int id;
-  static Actuator* build(JsonObject& o);
+  static Actuator* build(JsonObject& info);
 
-  virtual void activate(JsonObject& o);
+  virtual void activate(JsonObject& config);
   virtual void update() {};
 };

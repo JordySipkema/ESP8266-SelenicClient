@@ -15,8 +15,6 @@ void Timer::begin()
 
 }
 
-
-
 void Timer::addCallback(int delay, const std::function<void()> &callback, bool repeat)
 {
   callbacks.push_back(Callback(callback, delay, repeat));
@@ -29,7 +27,7 @@ void Timer::update()
 
     for(std::list<Callback>::iterator it = callbacks.begin(); it != callbacks.end(); it++)
     {
-      if(it->fireTime < now)
+      if(it->fireTime <= now)
       {
         it->callback();
         if(it->delay == 0)

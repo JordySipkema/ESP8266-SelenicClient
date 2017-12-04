@@ -90,8 +90,8 @@ void setup() {
 #endif
   if(!callApi(String("nodes/") + String(ESP.getChipId(), HEX), "GET", "", [](JsonObject& ret)
   {
-    settings.name = ret["data"][0]["name"].as<const char*>();
-    settings.id = ret["data"][0]["id"];
+    settings.name = ret["data"]["name"].as<const char*>();
+    settings.id = ret["data"]["node_id"];
     logger.print("API\tNode ID: ");
     logger.println(settings.id);
     logger.print("API\tNode name: ");
@@ -187,6 +187,10 @@ void setup() {
 	 char buf[200];
 	 sensors.printTo(buf, 200);
 	 httpServer.send(200, "application/json",  buf);
+ });
+
+ httpServer.on("/api/rbt", [](){
+	 httpServer.send(200, "application/json", "{\"result\":\"reboot\"}");
  });
 
   sendHeartbeat();

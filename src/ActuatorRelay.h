@@ -6,5 +6,5 @@ class ActuatorRelay : public Actuator
 {
 public:
   ActuatorRelay(const JsonObject& config);
-  void activate(JsonObject& o);
+  void activate(JsonObject& config);
 };
