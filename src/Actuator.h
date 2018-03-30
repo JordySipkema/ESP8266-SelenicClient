@@ -3,6 +3,7 @@
 #include <ArduinoJson.h>
 
 #define ACT_RELAY_TYPE 5
+#define ACT_LED_TYPE 1
 
 class Actuator
 {

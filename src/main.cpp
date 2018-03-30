@@ -91,11 +91,12 @@ void setup() {
   if(!callApi(String("nodes/") + String(ESP.getChipId(), HEX), "GET", "", [](JsonObject& ret)
   {
     settings.name = ret["data"]["name"].as<const char*>();
-    settings.id = ret["data"]["node_id"];
+    settings.id = ret["data"]["hardware_id"];
     logger.print("API\tNode ID: ");
     logger.println(settings.id);
     logger.print("API\tNode name: ");
     logger.println(settings.name);
+
     if(settings.id == 0)
     {
       logger.println("ERROR\tOops, cannot have ID 0");
@@ -103,6 +104,24 @@ void setup() {
       delay(1000);
       ESP.restart();
     }
+
+		logger.printTime();
+		logger.print("API\tSensor information received. Number of sensors: ");
+		logger.println(ret["data"]["sensors"].size());
+
+		for(int i = 0; i < ret["data"]["sensors"].size(); i++)
+		{
+			Actuator* actuator = Actuator::build(ret["data"]["sensors"][i]);
+			if(actuator)
+				settings.actuators.push_back(actuator);
+			else
+			{
+				logger.print("API\tUnknown sensor or actuator. (type: ");
+				logger.print((int)ret["data"]["sensors"][i]["type"]);
+				logger.println(")");
+			}
+		}
+
   })) ESP.restart();
 
 #ifdef USE_NEOPIXEL
@@ -120,23 +139,23 @@ void setup() {
 	MDNS.begin(host.c_str());
 	timer.begin();
 
-	callApi(String("nodes/") + settings.id + String("/sensors"), "GET", "", [](JsonObject& ret){
-		logger.printTime();
-		logger.print("API\tSensor information received. Number of sensors: ");
-		logger.println(ret["data"].size());
-		for(int i = 0; i < ret["data"].size(); i++)
-		{
-			Actuator* actuator = Actuator::build(ret["data"][i]);
-			if(actuator)
-				settings.actuators.push_back(actuator);
-			else
-			{
-				logger.print("API\tUnknown sensor or actuator. (type: ");
-				logger.print((int)ret["data"][i]["type"]);
-				logger.println(")");
-			}
-		}
-	});
+	// callApi(String("nodes/") + settings.id + String("/sensors"), "GET", "", [](JsonObject& ret){
+	// 	logger.printTime();
+	// 	logger.print("API\tSensor information received. Number of sensors: ");
+	// 	logger.println(ret["data"].size());
+	// 	for(int i = 0; i < ret["data"].size(); i++)
+	// 	{
+	// 		Actuator* actuator = Actuator::build(ret["data"][i]);
+	// 		if(actuator)
+	// 			settings.actuators.push_back(actuator);
+	// 		else
+	// 		{
+	// 			logger.print("API\tUnknown sensor or actuator. (type: ");
+	// 			logger.print((int)ret["data"][i]["type"]);
+	// 			logger.println(")");
+	// 		}
+	// 	}
+	// });
 
 	httpUpdater.setup(&httpServer);
 	httpServer.begin();
@@ -214,14 +233,15 @@ void sendHeartbeat(void){
 	StaticJsonBuffer<200> buffer;
 	JsonObject& o = buffer.createObject();
 	o["heapspace"] = ESP.getFreeHeap();
-	callApi(String("nodes/ping/") + settings.id, "POST", o, [](JsonObject &ret) {  });
+	callApi(String("nodes/ping/") + String(ESP.getChipId(), HEX), "POST", o, [](JsonObject &ret) {  });
 }
 
 bool callApi(String api, String method, String postData, std::function<void(JsonObject& data)> callback)
 {
   HTTPClient http;
-  http.begin(String("http://selenic-api.jordysipkema.nl/" + api)); //HTTP
+  http.begin(String("http://selenic-api.jordysipkema.nl/api/" + api)); //HTTP
 	http.addHeader("Content-Type", "application/json");
+	http.addHeader("X-ACCESS-TOKEN", CONFIG_TOKEN);
   int httpCode = 0;
   if(method == "GET")         httpCode = http.GET();
   else if(method == "POST")   httpCode = http.POST(postData);

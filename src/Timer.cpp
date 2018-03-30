@@ -5,15 +5,15 @@
 Timer::Timer() {}
 void Timer::begin()
 {
-  configTime(2 * 3600, 3600, "192.168.2.204", "pool.ntp.org");
+  configTime(2 * 3600, 3600, "pool.ntp.org");
   Serial.println("TIME\tSyncing time with pool.ntp.org");
   while (!time(nullptr)) {
     Serial.print(".");
     delay(1000);
   }
   Serial.println("\nTIME\tTime synchronization completed.");
-
 }
+
 
 void Timer::addCallback(int delay, const std::function<void()> &callback, bool repeat)
 {
